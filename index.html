@@ -5148,6 +5148,8 @@ function resume(vr){
   if(!exam.active)msg(P.manual?'Wciśnij sprzęgło (C), wrzuć 1 i ruszaj':'Wrzuć 1 (E) i dodaj gazu',4);
 }
 function openMenu(){mode='menu';qcToggle(false);$('menu').hidden=false;$('hud').hidden=true;$('touch').hidden=true;$('tbar').hidden=true;$('result').hidden=true;Snd.horn(false);}
+// any start-up error is shown in the menu instead of leaving it stuck on "checking WebXR"
+window.addEventListener('error',e=>{try{const s=document.getElementById('xrStatus');if(s&&/Sprawdzam/.test(s.textContent)){s.className='status bad';s.textContent='Błąd uruchamiania: '+(e.message||e)+' — odśwież stronę.';}}catch(_){}});
 async function enterVR(){
   const s=$('xrStatus');
   try{
@@ -5175,9 +5177,10 @@ buildCity();
 scene.traverse(o=>{if(o.material===MAT.pool)scenePool=o;});
 for(const b of bays)b.along=nearestAlong(routes[b.route],b.x,b.aisleZ,0.3);
 buildRail();buildAntek();buildGarage();buildAnna();buildTow();buildFolk();buildYard();buildAir();
-{let m=null;try{m=localStorage.getItem('mjvr.mascot');}catch(e){}if(m&&MASCOTS[m])setMascot(m,true);}
 const PC=buildPlayerCar();
 const rig=PC.rig;
+// the saved mascot needs the player's car to exist
+{let m=null;try{m=localStorage.getItem('mjvr.mascot');}catch(e){}try{if(m&&MASCOTS[m])setMascot(m,true);}catch(e){console.warn(e);}}
 camera.position.copy(EYE);
 // static parked cars in the lot (merged, solid for the player)
 {const sm=new Merger(),base=new THREE.Matrix4();

@@ -530,13 +530,13 @@ function krkHejnal(vol){const c=Snd.ctx;if(!c||vol<0.01)return;let t=c.currentTi
 function krkViewer(){return FOOT.on&&!FOOT.ride?{x:FOOT.x,z:FOOT.z}:FOOT.ride?{x:FOOT.ride.x||P.x,z:FOOT.ride.z||P.z}:{x:P.x,z:P.z};}
 const _kq=new THREE.Quaternion(),_ke=new THREE.Euler(),_km=new THREE.Matrix4(),_kv=new THREE.Vector3(),_ks=new THREE.Vector3();
 function krkUpdate(dt){
-  if(!KRK.built)return;const V=krkViewer(),near=krkIn(V.x,V.z)||Math.hypot(V.x-KRK.rynek.c[0],V.z-KRK.rynek.c[1])<420;
+  if(!KRK.built)return;krkProps();krkMisUpdate(dt);if(FOOT.room&&FOOT.room.id==='jama'&&Math.random()<dt*0.7)Snd.burst(2600+Math.random()*1500,0.04,0.05,'bandpass');const V=krkViewer(),near=krkIn(V.x,V.z)||Math.hypot(V.x-KRK.rynek.c[0],V.z-KRK.rynek.c[1])<420;
   // horse cabs going round the Cloth Hall
   for(const d of KRK.dor){if(!d.path)continue;d.s=(d.s+dt*d.sp)%d.L;let i=0;while(i<d.cum.length-2&&d.cum[i+1]<d.s)i++;const a=d.path[i],b=d.path[(i+1)%d.path.length],u=(d.s-d.cum[i])/((d.cum[i+1]-d.cum[i])||1);
     const x=a[0]+(b[0]-a[0])*u,z=a[1]+(b[1]-a[1])*u,L=Math.hypot(b[0]-a[0],b[1]-a[1])||1,hx=(b[0]-a[0])/L,hz=(b[1]-a[1])/L;
     d.hx+= (hx-d.hx)*Math.min(1,dt*2.5);d.hz+=(hz-d.hz)*Math.min(1,dt*2.5);const n=Math.hypot(d.hx,d.hz)||1;d.hx/=n;d.hz/=n;
     const o=d.o;o.x=x;o.z=z;o.hx=d.hx;o.hz=d.hz;o.vx=d.hx*d.sp;o.vz=d.hz*d.sp;
-    if(near){d.g.position.set(x,0.03+Math.abs(Math.sin(simTime*5.2+d.ph))*0.04,z);d.g.rotation.y=Math.atan2(-d.hx,-d.hz);d.g.visible=true;}}
+    d.g.position.set(x,0.03+(near?Math.abs(Math.sin(simTime*5.2+d.ph))*0.04:0),z);d.g.rotation.y=Math.atan2(-d.hx,-d.hz);}
   if(!near)return;
   // pigeons: peck about, scatter when someone comes close, settle again
   const PG=KRK.pig;if(PG){let k=0;const cx=PG.cx,cz=PG.cz;
@@ -563,20 +563,208 @@ function buildKrakowFolk(){
   KRK.routes.forEach((r,i)=>{if(i>=24)return;const pts=r.map(p=>[p[0]+rnd(-1.5,1.5),p[1]+rnd(-1.5,1.5)]);folkAdd(NM[i%NM.length],pts,{woman:i%3===0},9100+i,{speed:rnd(0.7,1.2),lines:LT});});
   const R=KRK.rynek,ax=R.ax,sk=KRK.sukR,rel=(a,b)=>[sk.c[0]+ax[0]*a-ax[1]*b,sk.c[1]+ax[1]*a+ax[0]*b];
   const sS=KRK.sS||1,bs=KRK.bS||1;
-  const ob=rel(-sS*(sk.L/2+6),-bs*(sk.W/2+4));folkAdd('Pani Halina (obwarzanki)',[ob],{woman:true},9201,{face:[-ax[1]*bs,ax[0]*bs],lines:['Obwarzanki świeże! Z makiem, z sezamem, z solą!']});
+  const ob=rel(-sS*(sk.L/2+6),-bs*(sk.W/2+4));KRK.halina=folkAdd('Pani Halina (obwarzanki)',[ob],{woman:true},9201,{face:[-ax[1]*bs,ax[0]*bs],talk:'krk_halina',lines:['Obwarzanki świeże! Z makiem, z sezamem, z solą!']});
   SHOPDOORS.push({id:'obw',n:'Wózek z obwarzankami',label:'Kup obwarzanka',x:ob[0]+0.8,z:ob[1],f:()=>shopDialog('Obwarzanki',['obwarzanek','water','coffee'],'Pani Halina: Obwarzanek z makiem? Najlepszy w całym Krakowie!')});
   const kw=rel(-sS*(sk.L/2-4),bs*(sk.W/2+4));folkAdd('Kwiaciarka',[kw],{woman:true},9202,{face:[ax[1]*bs,-ax[0]*bs],lines:['Kwiaty z Rynku przynoszą szczęście!']});
   SHOPDOORS.push({id:'kwiat',n:'Stragan z kwiatami',label:'Kup kwiaty',x:kw[0],z:kw[1],f:()=>shopDialog('Kwiaciarka z Rynku',['flowers'],'Kwiaciarka: Bukiecik dla kogoś miłego?')});
-  if(KRK.dorStand){const d=KRK.dorStand;folkAdd('Dorożkarz Józef',[d],{},9203,{lines:['Przejażdżka dorożką? Konie się nazywają Kasztan i Siwek.','Jeżdżę wokół Rynku od trzydziestu lat.','Hejnał zawsze urywa się w tym samym miejscu — na pamiątkę trębacza trafionego strzałą.']});}
+  if(KRK.dorStand){const d=KRK.dorStand;folkAdd('Dorożkarz Józef',[d],{},9203,{talk:'krk_dor',lines:['Przejażdżka dorożką? Konie się nazywają Kasztan i Siwek.','Jeżdżę wokół Rynku od trzydziestu lat.','Hejnał zawsze urywa się w tym samym miejscu — na pamiątkę trębacza trafionego strzałą.']});}
   const mk=rel(0,bs*(sk.W/2+14));folkAdd('Grajek z akordeonem',[mk],{},9204,{sit:true,lines:['*gra skoczną melodię* Wrzuć coś do kapelusza!','Gram tu od rana do wieczora.']});
   const st=rel(sS*(sk.L/2+4),-bs*(sk.W/2+10));folkAdd('Żywy pomnik',[st],{},9205,{lines:['…','*mruga* Psst, nie mów nikomu, że się ruszam.']});
   const B=KRK.red.find(r=>r.n==='barbakan');if(B)folkAdd('Strażnik Barbakanu',[[B.circ[0]+B.circ[2]+3,B.circ[1]]],{},9206,{lines:['Barbakan bronił Bramy Floriańskiej. Teraz broni go bilet wstępu.']});
+  if(KRK.mis&&KRK.mis.barb){const p=KRK.mis.barb;folkAdd('Pan Tadeusz, przewodnik',[[p[0]+2,p[1]+2]],{},9210,{talk:'krk_tad',lines:['Droga Królewska zaczyna się tutaj!']});}
+  {const gp=rel(-sS*(sk.L/2+16),-bs*(sk.W/2+12));KRK.guidePos=gp;KRK.guide=folkAdd('Pani Ewa, przewodniczka',[gp],{woman:true},9211,{talk:'krk_guide',lines:['Ojej, gdzie on się podział…']});}
   if(KRK.smok)folkAdd('Pan przy smoku',[[KRK.smok.x+6,KRK.smok.z+3]],{},9207,{lines:['Poczekaj chwilę — smok zieje ogniem co pół minuty!','Legenda mówi, że szewc Skuba nakarmił go baranem z siarką.']});
   folkAdd('Przewodniczka po Wawelu',[[KRK.wout[0][0]-20,KRK.wout[0][1]+30],[KRK.wout[0][0]-10,KRK.wout[0][1]+60]],{woman:true},9208,{speed:0.5,y:WAWEL_H+0.03,lines:['Na Wawelu koronowano królów Polski.','W katedrze wisi dzwon Zygmunt — bije tylko w wyjątkowe dni.']});
   const pn=[262.7,944.8];folkAdd('Pan od zapiekanek',[pn],{},9209,{lines:['Zapiekanka z placu Nowego — sama legenda!']});
   SHOPDOORS.push({id:'zap',n:'Okrąglak — zapiekanki',label:'Kup zapiekankę (Okrąglak)',x:pn[0],z:pn[1]+1,f:()=>shopDialog('Zapiekanki na placu Nowym',['zapiekanka','water'],'Pan od zapiekanek: Z pieczarkami i serem? Pół metra smaku!')});
 }
 function krkCull(){if(!KRK.chunks)return;camera.getWorldPosition(_skyV);const lim=(P.level<0?0:scene.fog.far)+90;for(const c of KRK.chunks){const v=Math.hypot(_skyV.x-c.cx,_skyV.z-c.cz)-113<lim;for(const m of c.meshes||[])m.visible=v;}}
+
+/* ================= Kraków, part 2: sightseeing inside the monuments, a tourist passport, old-town missions, horse-cab rides ================= */
+const STAMPS=[['szlak','Droga Królewska z przewodnikiem'],['mariacki','Kościół Mariacki'],['wieza','Wieża hejnałowa'],['hejnal','Hejnał zagrany samemu'],['sukiennice','Sukiennice'],['zamek','Komnaty Królewskie na Wawelu'],['dzwon','Dzwon Zygmunt'],['jama','Smocza Jama'],['remuh','Synagoga Remuh']];
+function krkStamp(id){if(!SAVE.stamps)SAVE.stamps=[];if(SAVE.stamps.includes(id))return;SAVE.stamps.push(id);saveGame();const n=SAVE.stamps.length,N=STAMPS.length,nm=(STAMPS.find(s=>s[0]===id)||[0,id])[1];
+  msg('📜 Pieczątka w paszporcie turysty: '+nm+' ('+n+'/'+N+')',4);Snd.tick(true);if(n===N)cashIn(300,'komplet pieczątek w paszporcie turysty');}
+function krkPassport(){const st=SAVE.stamps||[];dlgOpen('📜 Paszport turysty — Kraków','Za komplet pieczątek dostaniesz 300 zł. Masz '+st.length+'/'+STAMPS.length+'.',STAMPS.map(([id,n])=>({t:(st.includes(id)?'✅ ':'⬜ ')+n,f:null})));}
+const KRK_SIGHTS=[];
+// ---- the rooms (built far west like the market and the homes) ----
+function buildKrkRooms(){
+  const K=KRK,D=K.doors||{},m=new Merger(),lm=new Merger();
+  const box=(x,y,z,sx,sy,sz,c,ry)=>m.add(G.box,M(x,y,z,sx,sy,sz,ry||0),c),glow=(x,y,z,sx,sy,sz,c,ry)=>lm.add(G.box,M(x,y,z,sx,sy,sz,ry||0),c);
+  const shell=(R,h,floor,wall,ceil)=>{const cx=(R.x0+R.x1)/2,cz=(R.z0+R.z1)/2,W=R.x1-R.x0,Dd=R.z1-R.z0;box(cx,-0.05,cz,W,0.1,Dd,floor);box(cx,h,cz,W,0.1,Dd,ceil);
+    for(const sd of[-1,1]){box(cx,h/2,cz+sd*Dd/2,W,h,0.1,wall);box(cx+sd*W/2,h/2,cz,0.1,h,Dd,wall);}box(R.x1-0.07,1.2,cz,0.05,2.4,1.6,'#4a3020');glow(R.x1-0.09,2.6,cz,0.03,0.25,0.9,'#3ad17a');};
+  const mk=(id,n,x0,x1,z0,z1,door,price,fee)=>{if(!door)return null;const R={id,n,x0,x1,z0,z1,door:[x1-1.2,(z0+z1)/2],out:[door[0],door[1]],outYaw:door[2]||0,obs:[],targets:[],krk:true};ROOMS.push(R);
+    KRK_SIGHTS.push({R,x:door[0],z:door[1],price,fee:fee||n});return R;};
+  const say2=(t,w)=>{say(t,w||'Przewodnik');};
+  // Kościół Mariacki: starry blue vault, Veit Stoss altarpiece, stained glass
+  {const R=mk('mariacki','Kościół Mariacki',-2560,-2512,380,398,D.mar,15,'Bilet do Kościoła Mariackiego');if(R){const cz=389,h=16;shell(R,h,'#8a8378','#c9b9a0','#1f3a7a');
+    for(let k=0;k<160;k++)glow(rnd(R.x0+1,R.x1-1),h-0.08,rnd(R.z0+0.6,R.z1-0.6),0.2,0.03,0.2,'#f2c75a');
+    for(let x=R.x0+8;x<R.x1-5;x+=6){for(const sd of[-1,1]){box(x,h/2,cz+sd*5.6,1.2,h,1.2,'#9a5a44');R.obs.push([x-0.6,cz+sd*5.6-0.6,x+0.6,cz+sd*5.6+0.6]);}box(x,h-0.4,cz,0.4,0.4,18,'#7d5a46');}
+    const cols=['#c8102e','#2a5bd7','#f2b630','#2f9e4f','#8e44ad'];let ci=0;
+    for(let x=R.x0+11;x<R.x1-6;x+=6)for(const z of[R.z0+0.07,R.z1-0.07]){glow(x,8.5,z,2.2,7,0.04,cols[ci++%5]);glow(x,8.5,z,0.12,7,0.05,'#2a2a2a');glow(x,8.5,z,2.2,0.12,0.05,'#2a2a2a');}
+    for(let x=R.x0+12;x<R.x1-6;x+=1.7)for(const sd of[-1,1])box(x,0.45,cz+sd*2.9,0.5,0.9,3.4,'#5a3b26');R.obs.push([R.x0+11.5,cz+1.1,R.x1-5.5,cz+4.7],[R.x0+11.5,cz-4.7,R.x1-5.5,cz-1.1]);
+    box(R.x0+3,0.4,cz,5,0.8,11,'#7a6a5a');box(R.x0+0.9,7,cz,0.5,9,6.4,'#d4af37');box(R.x0+1.2,7,cz,0.1,7.4,5.2,'#1d3f7a');box(R.x0+1,2.2,cz,0.6,2.2,6.4,'#b8902a');
+    for(let k=0;k<5;k++)box(R.x0+1.3,5+(k%2)*2.2,cz-2+k,0.2,1.8,0.5,'#e8c35a');for(const sd of[-1,1])box(R.x0+1.6,7,cz+sd*5.3,0.3,9,4.2,'#d4af37',sd*0.35);m.add(G.cone,M(R.x0+1,13,cz,2,3.5,2),'#d4af37');
+    R.obs.push([R.x0,cz-6,R.x0+5.6,cz+6]);
+    box(R.x0+8,0.5,cz-7.6,1.6,1,0.6,'#2a2a2a');K.candles=[];for(let k=0;k<8;k++){const c=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.14,0.06),new THREE.MeshBasicMaterial({color:0xffb030}));c.position.set(R.x0+7.4+(k%4)*0.4,1.1,cz-7.75+((k/4)|0)*0.3);c.visible=false;scene.add(c);K.candles.push(c);}
+    for(let x=R.x0+9;x<R.x1-4;x+=12)glow(x,10,cz,0.8,0.4,0.8,'#fff0c0');
+    R.targets.push({x:R.x0+6.6,z:cz,r:3,label:'Ołtarz Wita Stwosza',f:()=>{dlgOpen('Ołtarz Wita Stwosza','Wit Stwosz rzeźbił go w latach 1477–1489. To największy gotycki ołtarz w Europie — figury mają prawie trzy metry wysokości. Skrzydła otwiera się codziennie przed południem.',[]);krkStamp('mariacki');}},
+      {x:R.x0+8,z:cz-6.8,r:2,label:'Zapal świeczkę (2 zł)',f:()=>{if(cashPay(2,'Świeczka')){const c=K.candles.find(q=>!q.visible);if(c)c.visible=true;msg('🕯️ Zapalasz świeczkę.',2);}}},
+      {x:R.x1-4,z:cz-6.5,r:2.2,label:'Wejdź na wieżę hejnałową (20 zł, 239 schodów)',f:()=>{if(cashPay(20,'Bilet na wieżę'))krkTowerUp();}});
+    R.folk=[['Kustosz',[[R.x1-6,cz+6.8]],{},{face:[-1,0],lines:['Proszę o ciszę — trwa zwiedzanie.','Gwiaździste sklepienie namalowano pod koniec XIX wieku.','Witraże projektowali m.in. Wyspiański i Mehoffer.']}],
+      ['Turystka z przewodnikiem',[[R.x1-8,cz-0.4],[R.x0+8,cz-0.4]],{woman:true},{speed:0.5,lines:['Jak tu pięknie… te gwiazdy na suficie!']}]];}}
+  // Sukiennice: the cloth hall with souvenir stalls
+  {const R=mk('sukiennice','Sukiennice',-2570,-2510,420,434,D.suk,0);if(R){const cz=427,h=9;shell(R,h,'#7d6e5e','#e6d8bc','#c9b48f');
+    for(let x=R.x0+3;x<R.x1-2;x+=4)for(const z of[R.z0+0.1,R.z1-0.1])box(x,h-1.4,z,0.5,2.8,0.4,'#d7c6a2');
+    const GOODS=[['#f0a020','#e08a10','#ffd060'],['#3d6b3a','#c8102e','#f2f0e6'],['#8a5a2a','#f2f0e6','#2a5bd7']];
+    for(let x=R.x0+5,k=0;x<R.x1-6;x+=6,k++)for(const sd of[-1,1]){const z=cz+sd*4.6;box(x,0.5,z,4,1,1.6,'#7a4a2a');box(x,2.6,z+sd*0.6,4.2,0.12,2.2,pick(['#8c2f2f','#2f5e8c','#3d6b3a']));
+      const g=GOODS[k%3];for(let q=0;q<10;q++)m.add(G.ico0,M(x+rnd(-1.7,1.7),1.12,z+rnd(-0.6,0.6),0.25,0.2,0.25),pick(g));R.obs.push([x-2,z-0.8,x+2,z+0.8]);}
+    for(let x=R.x0+6;x<R.x1-4;x+=10)glow(x,h-0.6,cz,1.2,0.3,0.4,'#fff0c0');
+    const shop=(x,z,lab,name,ids,greet)=>R.targets.push({x,z,r:2.4,label:lab,f:()=>krkShop(name,ids,greet)});
+    shop(R.x0+5,cz-2.9,'Stoisko z bursztynem','Bursztyn z Bałtyku',['amber','amberring'],'Prawdziwy bursztyn, nie plastik!');
+    shop(R.x0+11,cz+2.9,'Stoisko z pamiątkami','Pamiątki z Krakowa',['smokfig','magnes','pocztowka'],'Smok na lodówkę? Bestseller!');
+    shop(R.x0+17,cz-2.9,'Rękodzieło góralskie','Rękodzieło',['szkatulka','koronka','ciupaga'],'Wszystko ręcznie robione pod Zakopanem.');
+    R.targets.push({x:R.x1-4,z:cz,r:2.2,label:'Historia Sukiennic',f:()=>{dlgOpen('Sukiennice','Od średniowiecza była to hala targowa — handlowano tu suknem. Po pożarze w 1555 roku dostała renesansową attykę z maszkaronami. Na piętrze jest dziś galeria malarstwa.',[]);krkStamp('sukiennice');}});
+    R.folk=[['Sprzedawczyni bursztynu',[[R.x0+5,cz-5.6]],{woman:true},{face:[0,1],lines:['Bursztyn to skamieniała żywica sprzed milionów lat.']}],['Kupiec z pamiątkami',[[R.x0+11,cz+5.6]],{},{face:[0,-1],lines:['Smok, magnes, pocztówka — trzy za trzydzieści!']}],
+      ['Turysta z mapą',[[R.x1-6,cz+0.5],[R.x0+6,cz+0.5]],{},{speed:0.6,lines:['Gdzie tu się płaci kartą?']}]];}}
+  // Komnaty Królewskie on Wawel: coffered ceiling with carved heads, tapestries, throne
+  {const R=mk('zamek','Komnaty Królewskie — Wawel',-2560,-2516,460,478,D.zamek,30,'Bilet do Komnat Królewskich');if(R){const cz=469,h=8;shell(R,h,'#6b4a33','#c9b28c','#5a3a24');
+    for(let x=R.x0+2;x<R.x1-1;x+=3){box(x,h-0.3,cz,0.25,0.5,18,'#3e2716');}for(let z=R.z0+2;z<R.z1-1;z+=3)box((R.x0+R.x1)/2,h-0.3,z,44,0.5,0.25,'#3e2716');
+    for(let x=R.x0+3.5;x<R.x1-2;x+=6)for(let z=R.z0+3.5;z<R.z1-2;z+=6)m.add(G.ico0,M(x,h-0.75,z,0.6,0.7,0.6),'#d8b48a');
+    for(let x=R.x0+5;x<R.x1-6;x+=9)for(const sd of[-1,1]){const z=cz+sd*(9-0.12);box(x,3.6,z,7,4.6,0.08,'#4f6b3a');for(let q=0;q<14;q++)box(x+rnd(-3,3),3.6+rnd(-1.8,1.8),z-sd*0.05,rnd(0.4,1.4),rnd(0.3,1),0.02,pick(['#8a6a3a','#b5532f','#d8c08a','#2f4a2a','#6b3a5a']));}
+    box(R.x0+2.5,0.3,cz,4,0.6,6,'#8c1f1f');box(R.x0+1.2,1.5,cz,0.8,2.4,1.6,'#8c1f1f');box(R.x0+1.6,0.95,cz,1.2,0.3,1.4,'#8c1f1f');box(R.x0+1.15,2.8,cz,0.3,0.6,1.7,'#d4af37');box(R.x0+0.5,4,cz,1.6,0.3,4,'#d4af37');
+    R.obs.push([R.x0,cz-3,R.x0+4.5,cz+3]);box(R.x1-8,1.2,R.z0+0.6,3,2.4,1,'#9a8f7d');glow(R.x1-8,0.6,R.z0+0.7,1.6,0.6,0.5,'#ff7a1a');R.obs.push([R.x1-9.6,R.z0,R.x1-6.4,R.z0+1.2]);
+    for(let x=R.x0+8;x<R.x1-4;x+=12)glow(x,h-1.4,cz,1.4,0.5,1.4,'#fff0c0');
+    R.targets.push({x:R.x0+5.4,z:cz,r:2.6,label:'Tron w Sali Senatorskiej',f:()=>{dlgOpen('Sala Senatorska','Tu obradował senat i odbywały się królewskie uczty. Zamek przebudowano w stylu renesansowym za Zygmunta Starego w XVI wieku.',[{t:'Usiądź na tronie (tylko na chwilę!)',f:()=>{say('Psst! Proszę zejść z tronu, to zabytek!','Strażnik');}},{t:'Rozejrzyj się',f:null}]);krkStamp('zamek');}},
+      {x:R.x0+14,z:cz+7.4,r:2.4,label:'Arrasy',f:()=>dlgOpen('Arrasy jagiellońskie','Zygmunt August zamówił we Flandrii ponad 350 tkanin. Do dziś na Wawelu zachowało się 136 z nich.',[])},
+      {x:R.x0+20,z:cz,r:2.4,label:'Głowy wawelskie w stropie',f:()=>dlgOpen('Głowy wawelskie','Strop Sali Poselskiej zdobiło 194 rzeźbionych głów. Zachowało się 30 — jedna ma zakneblowane usta, bo podobno przerwała królowi.',[])});
+    R.folk=[['Strażnik komnat',[[R.x1-3,cz-7]],{shirt:'#1e1f22'},{face:[-1,0],lines:['Proszę nie dotykać arrasów.','Głowa z przewiązanymi ustami? Za dużo gadała przy królu.']}],
+      ['Wycieczka szkolna',[[R.x1-6,cz+2],[R.x0+8,cz+2]],{},{speed:0.7,lines:['Proszę pani, a kiedy obiad?']}]];}}
+  // Dzwon Zygmunt in the cathedral tower
+  {const R=mk('dzwon','Wieża Zygmuntowska — Dzwon Zygmunt',-2530,-2512,500,516,D.dzwon,12,'Bilet na wieżę Zygmuntowską');if(R){const cz=508,cx=-2522,h=12;shell(R,h,'#6b4a33','#a89a84','#5a3a24');
+    for(const z of[cz-1.6,cz+1.6])box(cx,7.6,z,14,0.6,0.6,'#4a3020');box(cx,7.9,cz,1,0.4,4,'#4a3020');
+    m.add(G.cyl12,M(cx,6.6,cz,2.0,1.2,2.0),'#8a6a2a');m.add(G.cyl12,M(cx,5.4,cz,2.6,1.4,2.6),'#8a6a2a');m.add(G.cyl12,M(cx,4.5,cz,3.2,0.6,3.2),'#9a7a3a');box(cx,4.3,cz,0.3,1.6,0.3,'#3a3a3a');m.add(G.ico,M(cx,3.5,cz,0.6,0.6,0.6),'#3a3a3a');
+    R.obs.push([cx-2,cz-2,cx+2,cz+2]);glow(cx-5,h-1.2,cz,0.6,0.4,0.6,'#fff0c0');
+    R.targets.push({x:cx+2.6,z:cz,r:2.2,label:'Dotknij serca dzwonu (na szczęście)',f:()=>{SAVE.luck=1;saveGame();dlgOpen('Dzwon Zygmunt','Odlany w 1520 roku, waży blisko 10 ton. Dzwoni tylko w najważniejsze dni. Podobno dotknięcie jego serca przynosi szczęście — spróbuj zdrapki!',[]);krkStamp('dzwon');}},
+      {x:cx-2.6,z:cz,r:2.2,label:'Uderz w dzwon (bardzo cicho…)',f:()=>{krkBell();msg('🔔 Buuum… Cały Kraków to usłyszał.',3);}});}}
+  // Smocza Jama: a cave under the hill; you come out by the dragon
+  {const jd=D.jama;const R=mk('jama','Smocza Jama',-2566,-2526,540,552,jd,10,'Bilet do Smoczej Jamy');if(R){R.out=[KRK.smok.x+6,KRK.smok.z];R.outYaw=Math.PI/2;const cz=546,h=5;shell(R,h,'#3a3631','#4a443c','#3a342e');
+    for(let x=R.x0+1;x<R.x1-2;x+=1.6)for(const z of[R.z0+0.6,R.z1-0.6]){const s=rnd(0.9,1.8);m.add(G.ico0,M(x,rnd(0.3,1.6),z,s,s*rnd(0.8,1.6),s),pick(['#5a524a','#4a443c','#6a5f52','#3e3832']));}
+    for(let k=0;k<26;k++){const x=rnd(R.x0+1,R.x1-3),z=rnd(R.z0+1,R.z1-1),l=rnd(0.4,1.4);m.add(G.cone6,M(x,h-l/2,z,0.3,l,0.3,0,Math.PI),'#6a5f52');}
+    for(let x=R.x0+4;x<R.x1-2;x+=8)glow(x,2.4,R.z0+1.2,0.18,0.3,0.18,'#ffb44a');
+    for(let k=0;k<7;k++)box(rnd(R.x0+3,R.x0+10),0.08,rnd(cz-2,cz+2),rnd(0.4,0.9),0.08,0.1,'#e8e2d0',rnd(0,3));
+    for(let k=0;k<14;k++)glow(R.x0+3+rnd(-0.8,0.8),0.2+rnd(0,0.4),cz-3.5+rnd(-0.6,0.6),0.25,0.18,0.25,'#e8c330');
+    R.targets.push({x:R.x0+4,z:cz-2.5,r:2.4,label:'Smoczy skarb',f:()=>{dlgOpen('Smocza Jama','Jaskinia pod wzgórzem wawelskim. Według legendy mieszkał tu smok, którego pokonał szewczyk Skuba — podrzucił mu barana wypchanego siarką.',[]);krkStamp('jama');}});
+    R.folk=[['Grotołaz',[[R.x0+12,cz+2]],{},{lines:['Uważaj na głowę — stalaktyty!','Wyjście prowadzi prosto do smoka nad Wisłą.']}]];}}
+  // Synagoga Remuh
+  {const R=mk('remuh','Synagoga Remuh',-2544,-2520,580,594,D.remuh,10,'Bilet do synagogi Remuh');if(R){const cz=587,h=7;shell(R,h,'#8a7a62','#e8e0cc','#7a5a3a');
+    const bx=-2532;box(bx,0.4,cz,4,0.8,3,'#6b4a2a');for(const sd of[-1,1])box(bx,1.2,cz+sd*1.5,4,0.8,0.08,'#4a3020');R.obs.push([bx-2,cz-1.6,bx+2,cz+1.6]);
+    box(R.x0+0.5,2.2,cz,0.8,3.6,2.4,'#6b4a2a');box(R.x0+0.95,2.2,cz,0.1,3,2,'#2a3f7a');box(R.x0+0.96,3.4,cz,0.1,0.3,2,'#d4af37');R.obs.push([R.x0,cz-1.3,R.x0+1,cz+1.3]);
+    for(let x=R.x0+3;x<R.x1-3;x+=2.2)for(const sd of[-1,1])if(Math.abs(x-bx)>3){box(x,0.45,cz+sd*4.6,0.5,0.9,3,'#5a3b26');R.obs.push([x-0.3,cz+sd*4.6-1.5,x+0.3,cz+sd*4.6+1.5]);}
+    for(let x=R.x0+5;x<R.x1-2;x+=7)glow(x,h-1,cz,0.8,0.5,0.8,'#fff0c0');
+    R.targets.push({x:bx+3,z:cz,r:2.4,label:'Bima i Aron ha-Kodesz',f:()=>{dlgOpen('Synagoga Remuh','Zbudowana w XVI wieku, nazwana od rabina Mojżesza Isserlesa — Remu. To wciąż czynna synagoga. Obok jest jeden z najstarszych cmentarzy żydowskich w Polsce.',[]);krkStamp('remuh');}});
+    R.folk=[['Opiekun synagogi',[[R.x1-3,cz+4]],{},{face:[-1,0],lines:['Szalom! Proszę się rozejrzeć.','Na cmentarzu obok macewy pochodzą nawet z XVI wieku.']}]];}}
+  const g=new THREE.Group();g.add(new THREE.Mesh(m.build(),matRoom));g.add(new THREE.Mesh(lm.build(),matBasicVC));scene.add(g);
+  for(const s of KRK_SIGHTS){const R=s.R;if(R.folk)R.folk.forEach(([n,pts,lk,o],i)=>folkAdd(n,pts,lk,9400+i*7+R.id.length,Object.assign({y:0.03},o)));}
+}
+function krkShop(name,ids,greet){const o=ids.map(id=>{const it=ITEMS[id];return {t:it.n+' — '+zl(it.p),f:()=>{if(cashPay(it.p,it.n)){bagAdd(id);msg('🛍️ Do torby: '+it.n,2.5);}}};});o.push({t:'Dziękuję, to wszystko',f:null});dlgOpen(name,(greet||'')+' Masz '+zl(SAVE.money)+'.',o);}
+function krkBell(){const c=Snd.ctx;if(!c)return;const t=c.currentTime,g=c.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.5,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+7);g.connect(Snd.master);
+  for(const [f,a] of[[73,1],[146,0.6],[175,0.35],[220,0.3],[293,0.18],[440,0.08]]){const o=c.createOscillator(),e=c.createGain();o.frequency.value=f;e.gain.value=a;o.connect(e);e.connect(g);o.start(t);o.stop(t+7.2);}}
+// walk targets outside: ticket desks of the sights + the car boot
+function krkTargets(x,z,c){
+  for(const s of KRK_SIGHTS){const d=Math.hypot(x-s.x,z-s.z);if(d<5)c.push({d,r:3.0,label:'Zwiedzaj: '+s.R.n+(s.price?' (bilet '+s.price+' zł)':' (wstęp wolny)'),f:()=>{if(!s.price||cashPay(s.price,s.fee))enterRoom(s.R);}});}
+  if((P.veh||'car')==='car'&&!FOOT.room){const bx=P.x-P.hx*(P.len/2+0.8),bz=P.z-P.hz*(P.len/2+0.8),d=Math.hypot(x-bx,z-bz),T=SAVE.torba||[],B=SAVE.trunk||[];
+    if(T.length)c.push({d,r:2.0,label:'Wypakuj zakupy do bagażnika ('+T.length+')',f:()=>{SAVE.trunk=B.concat(T);SAVE.torba=[];saveGame();Snd.burst(140,0.3,0.45,'lowpass');msg('🧺 Zakupy w bagażniku ('+SAVE.trunk.length+'). Użyjesz ich z centrum gry (G).',3.5);}});
+    else if(B.length)c.push({d,r:2.0,label:'Weź zakupy z bagażnika ('+B.length+')',f:()=>{SAVE.torba=B.slice();SAVE.trunk=[];saveGame();Snd.burst(140,0.3,0.45,'lowpass');msg('🛍️ Niesiesz torbę z zakupami ('+SAVE.torba.length+').',3);}});}
+}
+// ---- the view from the bugle tower of St Mary's ----
+function krkTowerUp(){const t=KRK.marTower;if(!t)return;fadeThen(()=>{FOOT.room=null;WX.cover=false;FOOT.view={x:t[0],y:55.5,z:t[1]};walkTeleport(t[0],t[1]);krkStamp('wieza');msg('🏰 Jesteś na wieży hejnałowej, 55 m nad Rynkiem. Rozejrzyj się!',4);});}
+function krkTowerDown(){const d=KRK.doors.mar;fadeThen(()=>{FOOT.view=null;walkTeleport(d[0],d[1],d[2]);});}
+function krkViewUpdate(I){const V=FOOT.view;FOOT.x=V.x;FOOT.z=V.z;FOOT.y=V.y;if(xr.active)rig.position.y=V.y;
+  FOOT.target={label:'Wieża hejnałowa: zagraj hejnał / zejdź',f:()=>dlgOpen('Wieża hejnałowa','Z tej wieży co godzinę trębacz gra hejnał na cztery strony świata.',[{t:'🎺 Zagraj hejnał',f:()=>{krkHejnal(1);krkStamp('hejnal');say('Hejnał urywa się w pół nuty — na pamiątkę trębacza, którego według legendy trafiła tatarska strzała.','Trębacz');}},{t:'Zejdź na dół',f:krkTowerDown},{t:'Zostań i podziwiaj widok',f:null}])};
+  if(I.act&&!DLG.open)FOOT.target.f();
+  const ht=DLG.open?'':((xr.active?'A':HEADLESS?'E':(document.body.classList.contains('touch')?'💬':'E'))+' — '+FOOT.target.label);
+  if(ht!==FOOT.ht){FOOT.ht=ht;if(!HEADLESS){$('whint').hidden=!ht||xr.active;$('whint').textContent=ht;if(xr.active){if(ht){drawCapBoard(ht);capBoard.visible=true;}else if(!cine)capBoard.visible=false;}}}}
+// ---- horse-cab ride round the Rynek ----
+function krkDorRide(){const d=KRK.dor[0];if(!d||FOOT.ride)return;if(!cashPay(40,'Przejażdżka dorożką'))return;
+  fadeThen(()=>{const ro={id:'dor',g:d.g,x:d.o.x,z:d.o.z,hx:d.o.hx,hz:d.o.hz,th:0,v:d.sp,dor:d,t0:simTime,said:0};startRide(ro,{kind:'dor',seat:[0.36,1.15,1.3],msg:'🐴 Wio! Dorożka rusza dookoła Rynku. Wysiąść możesz w każdej chwili (E).'});});}
+const DOR_TALK=['Po lewej Sukiennice — dawniej handlowano tu suknem.','Tam, przy Mariackim, co godzinę gra trębacz.','Wieża Ratuszowa to wszystko, co zostało z dawnego ratusza.','Pomnik Mickiewicza — krakowianie umawiają się „pod Adasiem”.'];
+function krkDorFollow(r){const d=r.dor,o=d.o;r.x=o.x;r.z=o.z;r.hx=o.hx;r.hz=o.hz;r.th=Math.atan2(-o.hx,-o.hz);FOOT.x=r.x;FOOT.z=r.z;FOOT.y=0;
+  const f=(simTime-r.t0)*d.sp/d.L;if(r.said<DOR_TALK.length&&f>(r.said+0.5)/(DOR_TALK.length+0.5)){say(DOR_TALK[r.said],'Dorożkarz Józef');r.said++;}
+  FOOT.target={label:'Wysiądź z dorożki',f:()=>rideExit(true)};FOOT.rinfo='🐴 Przejażdżka dorożką';
+  if(f>=1){rideExit(true);msg('🐴 Koniec przejażdżki. Dziękujemy i zapraszamy ponownie!',3);}}
+// ---- old-town missions ----
+const KMIS={m:null};
+function krkMisInfo(){const m=KMIS.m;return m?{who:m.who,txt:m.txt(),urgent:m.urgent?m.urgent():false}:null;}
+function krkMisTarget(){const m=KMIS.m;if(!m)return null;const t=m.tgt();return t?{x:t[0],z:t[1],col:'#ffd400'}:null;}
+function krkMisUpdate(dt){const m=KMIS.m;if(!m)return;m.upd(dt);if(KMIS.m!==m)return;const t=m.tgt();if(t)gmMark('krk',t[0],t[1],'#ffd400');}
+function krkNear(p,r){const V=krkViewer();return p&&Math.hypot(V.x-p[0],V.z-p[1])<r;}
+function krkMisStop(why){if(why)msg(why,3);if(KMIS.m&&KMIS.m.end)KMIS.m.end();KMIS.m=null;}
+const SZLAK=[['barb','Barbakan','Barbakan zbudowano pod koniec XV wieku. To jedna z niewielu takich fortyfikacji, które przetrwały w Europie.'],
+  ['brama','Brama Floriańska','Jedyna ocalała z ośmiu bram dawnych murów. Stąd wiedzie Droga Królewska — szlak koronacyjnych orszaków.'],
+  ['flor','ul. Floriańska','Tędy wjeżdżali do miasta królowie i posłowie. Zajrzyj do Jamy Michalika — słynnej kawiarni artystów.'],
+  ['suk','Rynek i Sukiennice','Rynek wytyczono przy lokacji miasta w 1257 roku. To jeden z największych średniowiecznych placów Europy.'],
+  ['mar','Kościół Mariacki','Wewnątrz jest ołtarz Wita Stwosza, a z wyższej wieży co godzinę gra hejnał.'],
+  ['grodz','ul. Grodzka','Grodzka prowadzi pod Wawel. Mijasz kościoły św. Piotra i Pawła oraz romański kościół św. Andrzeja.'],
+  ['zamek','Wawel','Na Wawelu rezydowali królowie Polski, a w katedrze ich koronowano i chowano.'],
+  ['smok','Smok Wawelski','Według legendy smoka pokonał szewczyk Skuba. Smok z brązu zieje ogniem do dziś!']];
+function krkSzlakStart(){const K=KRK,pts=SZLAK.map(([k,n,f])=>{const p=k==='suk'?K.doors.suk:k==='mar'?K.doors.mar:k==='zamek'?K.doors.zamek:k==='smok'?(K.smok&&[K.smok.x+6,K.smok.z]):K.mis[k];return p?{p:[p[0],p[1]],n,f}:null;}).filter(Boolean);
+  let i=0;KMIS.m={who:'👑 Droga Królewska',txt:()=>(i+1)+'/'+pts.length+' · '+pts[i].n,tgt:()=>pts[i].p,
+    upd:()=>{if(krkNear(pts[i].p,8)){say(pts[i].f,'Pan Tadeusz');i++;if(i>=pts.length){KMIS.m=null;cashIn(150,'Droga Królewska przebyta');krkStamp('szlak');}else msg('👑 Dalej: '+pts[i].n,3);}}};
+  msg('👑 Droga Królewska: idź za żółtym światłem — od Barbakanu aż do smoka.',4);}
+function krkTouristStart(){const K=KRK,g=K.guidePos;let p=null;for(let k=0;k<40&&!p;k++){const r=pick(K.routes),q=pick(r);if(Math.hypot(q[0]-g[0],q[1]-g[1])>130)p=q;}if(!p)p=K.routes[0][0];
+  const f=folkAdd('Hans, zagubiony turysta',[[p[0],p[1]]],{shirt:'#e8641b'},9300,{talk:'krk_hans',lines:['Entschuldigung… Rynek? Ich habe meine Gruppe verloren!']});const off=[rnd(-22,22),rnd(-22,22)];
+  let st='find';KMIS.m={who:'🧭 Zagubiony turysta',txt:()=>st==='find'?'Hans zgubił grupę — szukaj w zaznaczonej okolicy':'Zaprowadź Hansa do pani Ewy na Rynku',tgt:()=>st==='find'?(krkNear([f.x,f.z],18)?[f.x,f.z]:[p[0]+off[0],p[1]+off[1]]):g,
+    upd:()=>{if(st==='lead'&&Math.hypot(f.x-g[0],f.z-g[1])<5){KMIS.m=null;f.follow=false;f.g.visible=false;FOLK.splice(FOLK.indexOf(f),1);say('Danke schön! Dziękuję, że go pan przyprowadził!','Pani Ewa');cashIn(90,'odnaleziony turysta');}},
+    found:()=>{st='lead';f.follow=true;f.fx=f.x;f.fz=f.z;say('Oh, danke! Ich komme mit — idę za tobą!','Hans');},
+    end:()=>{f.follow=false;f.g.visible=false;const k=FOLK.indexOf(f);if(k>=0)FOLK.splice(k,1);},hans:f};
+  msg('🧭 Hans w pomarańczowej koszulce zgubił się gdzieś w Starym Mieście. Znajdź go i przyprowadź na Rynek.',5);}
+function krkDeliveryStart(){const K=KRK,pts=K.del.slice().sort(()=>Math.random()-0.5).slice(0,4);let i=0,t=240;
+  KMIS.m={who:'🥨 Obwarzanki na czas',txt:()=>'Dostawa '+(i+1)+'/4 · zostało '+fmtT(t),urgent:()=>t<40,tgt:()=>pts[i],
+    upd:dt=>{t-=dt;if(t<=0){krkMisStop('🥨 Za późno — obwarzanki wystygły. Pani Halina będzie zawiedziona.');return;}if(krkNear(pts[i],6)){i++;Snd.tick(true);if(i>=4){KMIS.m=null;cashIn(70+(t>60?30:0),'dostawa obwarzanków'+(t>60?' (z premią za tempo)':''));bagAdd('obwarzanek');msg('🥨 Pani Halina dorzuciła Ci obwarzanka do torby!',3);}else msg('🥨 Dostarczone! Następny adres na mapie ('+(i+1)+'/4).',2.5);}}};
+  msg('🥨 Rozwieź obwarzanki do czterech punktów w Starym Mieście. Masz 4 minuty!',4);}
+function krkTalk(f,k){
+  if(k==='krk_halina')return dlgOpen('Pani Halina','Obwarzanki świeże, prosto z pieca! Czym mogę służyć?',[{t:'Kup obwarzanka',f:()=>shopDialog('Obwarzanki',['obwarzanek','water','coffee'],'Pani Halina: Z makiem? Najlepszy w Krakowie!')},
+    ...(KMIS.m?[]:[{t:'🥨 Pomogę rozwieźć obwarzanki (misja)',f:krkDeliveryStart}]),{t:'Do widzenia',f:null}]);
+  if(k==='krk_dor')return dlgOpen('Dorożkarz Józef','Przejażdżka dookoła Rynku? Kasztan i Siwek już przebierają kopytami.',[{t:'🐴 Przejażdżka dorożką — 40 zł',f:krkDorRide},{t:'Opowiedz coś o Rynku',f:()=>say(pick(DOR_TALK),'Dorożkarz Józef')},{t:'Może później',f:null}]);
+  if(k==='krk_tad')return dlgOpen('Pan Tadeusz, przewodnik','Dzień dobry! Pokażę Panu Drogę Królewską — od Barbakanu, przez Rynek, aż na Wawel i do smoka.',[...(KMIS.m?[]:[{t:'👑 Ruszajmy! (misja)',f:krkSzlakStart}]),{t:'📜 Paszport turysty',f:krkPassport},{t:'Innym razem',f:null}]);
+  if(k==='krk_guide'){if(KMIS.m&&KMIS.m.hans)return dlgOpen('Pani Ewa','Znalazł go Pan? Ma pomarańczową koszulkę i mapę do góry nogami…',[]);
+    return dlgOpen('Pani Ewa, przewodniczka','Ojej! Zgubiłam turystę z mojej grupy — Hansa. Pomoże mi go Pan znaleźć?',[...(KMIS.m?[]:[{t:'🧭 Pomogę (misja)',f:krkTouristStart}]),{t:'Niestety nie mam czasu',f:null}]);}
+  if(k==='krk_hans'){const m=KMIS.m;if(m&&m.hans===f&&m.txt().startsWith('Hans'))return dlgOpen('Hans','Hallo! Ich bin verloren… Zgubiłem się! Rynek?',[{t:'Chodź ze mną, zaprowadzę cię',f:()=>m.found()}]);return dlgOpen('Hans','Danke!',[]);}
+  return dlgOpen(f.name,'…',[]);}
+/* ---- shopping: a basket in the market, a carrier bag, and the boot of the car ---- */
+const KOSZ=[];
+function bagAdd(id){if(!SAVE.torba)SAVE.torba=[];SAVE.torba.push(id);saveGame();}
+function basketTotal(){return KOSZ.reduce((s,id)=>s+(ITEMS[id]?ITEMS[id].p:0),0);}
+function basketShelf(n,ids){dlgOpen('Regał: '+n,'Wkładasz do koszyka, płacisz przy kasie. W koszyku: '+KOSZ.length+' szt. · '+zl(basketTotal())+'.',
+  ids.map(id=>({t:'➕ '+ITEMS[id].n+' — '+zl(ITEMS[id].p),f:()=>{KOSZ.push(id);Snd.tick(false);basketShelf(n,ids);}})).concat(KOSZ.length?[{t:'➖ Odłóż: '+ITEMS[KOSZ[KOSZ.length-1]].n,f:()=>{KOSZ.pop();basketShelf(n,ids);}}]:[],[{t:'Gotowe',f:null}]));}
+function basketLabel(){return KOSZ.length?'Kasa: zapłać za koszyk ('+KOSZ.length+' szt., '+zl(basketTotal())+')':'Kasa: zdrapki i gazety';}
+function basketCheckout(){if(!KOSZ.length)return shopDialog('Kasa',['news','lotto'],'Coś jeszcze?');const t=basketTotal(),cnt={};for(const id of KOSZ)cnt[id]=(cnt[id]||0)+1;
+  dlgOpen('Kasa — Market Koszyk','Kasjerka Ela skanuje: '+Object.keys(cnt).map(id=>ITEMS[id].n+(cnt[id]>1?' ×'+cnt[id]:'')).join(', ')+'. Razem '+zl(t)+'. Masz '+zl(SAVE.money)+'.',
+    [{t:'💳 Zapłać '+zl(t),f:()=>{if(!cashPay(t,'Zakupy'))return false;SAVE.torba=(SAVE.torba||[]).concat(KOSZ);KOSZ.length=0;saveGame();say('Dziękuję, zapraszamy ponownie! Paragon w torbie.','Kasjerka Ela');msg('🛍️ Zakupy w torbie. Przy aucie możesz je wypakować do bagażnika.',4);}},
+     {t:'🎟️ Dorzuć zdrapkę lub gazetę',f:()=>shopDialog('Kasa',['news','lotto'],'Proszę bardzo.')},{t:'Jeszcze coś dobiorę',f:null}]);}
+function marketExitBlocked(){if(!KOSZ.length)return false;Snd.burst(3200,0.5,0.2,'highpass');
+  dlgOpen('🚨 Bramka przy wyjściu piszczy!','Ochroniarz: W koszyku są niezapłacone produkty ('+KOSZ.length+' szt.).',[{t:'Wracam do kasy',f:null},{t:'Odkładam wszystko na półki i wychodzę',f:()=>{KOSZ.length=0;leaveRoom();}}]);return true;}
+function bagDialog(where){const L=where==='trunk'?SAVE.trunk:SAVE.torba;if(!L||!L.length)return;const cnt={};for(const id of L)cnt[id]=(cnt[id]||0)+1;
+  dlgOpen(where==='trunk'?'🧺 Bagażnik':'🛍️ Torba z zakupami','Co chcesz wziąć?',Object.keys(cnt).map(id=>({t:'Użyj: '+(ITEMS[id]?ITEMS[id].n:id)+(cnt[id]>1?' (×'+cnt[id]+')':''),f:()=>{const k=L.indexOf(id);if(k>=0)L.splice(k,1);saveGame();dlgClose();if(ITEMS[id])ITEMS[id].f();}})).concat([{t:'Zamknij',f:null}]));}
+function krkFridge(){const T=SAVE.torba||[];if(T.length){SAVE.fridge=(SAVE.fridge||[]).concat(T);SAVE.torba=[];saveGame();msg('🧊 Zakupy w lodówce ('+SAVE.fridge.length+').',3);return;}
+  const F=SAVE.fridge||[];if(F.length){const cnt={};for(const id of F)cnt[id]=(cnt[id]||0)+1;dlgOpen('Lodówka','Co wyjmujesz?',Object.keys(cnt).map(id=>({t:(ITEMS[id]?ITEMS[id].n:id)+(cnt[id]>1?' (×'+cnt[id]+')':''),f:()=>{F.splice(F.indexOf(id),1);saveGame();dlgClose();if(ITEMS[id])ITEMS[id].f();}})).concat([{t:'Zamknij',f:null}]));return;}
+  say(pick(['Zimna pizza z wczoraj. Idealnie.','Jogurt truskawkowy!','Pusto… trzeba jechać do marketu.']),'Ty');}
+function fridgeLabel(){return (SAVE.torba||[]).length?'Lodówka: włóż zakupy ('+SAVE.torba.length+')':(SAVE.fridge||[]).length?'Lodówka: zakupy ('+SAVE.fridge.length+')':'Lodówka: coś do jedzenia';}
+// what you carry: a red basket in the market, a paper bag afterwards; bags on the back seat of the car
+const PROPS={};
+function krkProps(){
+  if(!PROPS.bask){const m=new Merger();m.add(G.box,M(0,0,0,0.42,0.03,0.3),'#c8102e');for(const sd of[-1,1]){m.add(G.box,M(sd*0.2,0.1,0,0.02,0.2,0.3),'#c8102e');m.add(G.box,M(0,0.1,sd*0.14,0.42,0.2,0.02),'#c8102e');}m.add(G.box,M(0,0.2,0,0.34,0.02,0.02),'#1e1f22');
+    PROPS.bask=new THREE.Mesh(m.build(),matPlain);PROPS.items=[];for(let k=0;k<6;k++){const it=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.12,0.08),new THREE.MeshLambertMaterial({color:['#f4d03f','#2e86c1','#27ae60','#e67e22','#ecf0f1','#8e44ad'][k]}));it.position.set(-0.12+(k%3)*0.12,0.08,((k/3)|0)*0.1-0.05);PROPS.bask.add(it);PROPS.items.push(it);}
+    const b=new Merger();b.add(G.box,M(0,0,0,0.3,0.36,0.18),'#c8a774');b.add(G.box,M(0,0.2,0,0.31,0.05,0.19),'#b08f5c');b.add(G.box,M(0,0.24,0,0.02,0.08,0.02),'#2f9e4f');PROPS.bag=new THREE.Mesh(b.build(),matPlain);
+    PROPS.car=new THREE.Group();for(const p of[[0.38,0.82,1.25],[-0.05,0.8,1.3]]){const q=new THREE.Mesh(b.build(),matPlain);q.position.set(p[0],p[1],p[2]);q.scale.setScalar(1.25);PROPS.car.add(q);}PC.grp.add(PROPS.car);}
+  const walk=FOOT.on&&!FOOT.ride&&!FOOT.view&&!FOOT.tp,inMk=!!(FOOT.room&&FOOT.room.id==='market');
+  const att=(o,want,hand,off)=>{let par=null;if(want){if(xr.active){const h=xr.hands&&xr.hands[hand];par=h&&h.grip?h.grip:camera;}else par=camera;}
+    if(!par){if(o.parent)o.parent.remove(o);return;}if(o.parent!==par){par.add(o);}if(par===camera)o.position.set(off[0],off[1],off[2]);else o.position.set(0,-0.12,0.02);o.rotation.set(0,0,0);};
+  att(PROPS.bask,walk&&inMk,'left',[-0.28,-0.5,-0.55]);for(let k=0;k<6;k++)PROPS.items[k].visible=k<KOSZ.length;
+  att(PROPS.bag,walk&&(SAVE.torba||[]).length>0,'right',[0.3,-0.52,-0.5]);
+  PROPS.car.visible=(SAVE.trunk||[]).length>0&&(P.veh||'car')==='car';
+}
+
 // the district on the map screen (drawn once into a canvas, 1 px = 1 m)
 function krkMapCanvas(){if(HEADLESS||KRK.cv)return;const w=Math.ceil(KRK.x1-KRK.x0),h=Math.ceil(KRK.z1-KRK.z0),c=canvas(w,h),x=c.getContext('2d');if(!x)return;
   const poly=(P,col)=>{x.fillStyle=col;x.beginPath();P.forEach((p,i)=>i?x.lineTo(p[0]-KRK.x0,p[1]-KRK.z0):x.moveTo(p[0]-KRK.x0,p[1]-KRK.z0));x.closePath();x.fill();};
@@ -1746,7 +1934,7 @@ function buildCity(){
         const pc=rel(0,sd*(W/2-0.5));kst.add(G.box,M(pc[0],3.6,pc[1],6,7.2,1.4,ryA),'#2c2621');
         for(let a=-L/2+1.2;a<=L/2-1.2;a+=2.4){const p=rel(a,sd*(W/2-0.75));kst.add(G.box,M(p[0],12.7,p[1],1.2,1.4,0.5,ryA),'#efe3c8');if(Math.round(a/2.4)%3===0)kst.add(G.ico0,M(p[0]+(-ax[1]*sd)*0.32,13.6,p[1]+ax[0]*sd*0.32,0.5,0.6,0.5),'#d9c8a6');}}
       for(const e of[-1,1]){const p=rel(e*(L/2-0.3),0);kst.add(G.box,M(p[0],13.6,p[1],0.8,3.2,W-2,ryA),'#efe3c8');}
-      wall(sk.p,0.6,1.1,1.5);
+      wall(sk.p,0.6,1.1,1.5);{const dd=rel(0,K.bS*(W/2+2.4));K.doors=K.doors||{};K.doors.suk=[dd[0],dd[1],Math.atan2(ax[1]*K.bS,-ax[0]*K.bS)];}
       // town-hall tower beyond the south end, Mickiewicz monument on Mariacki's side, St Adalbert's church
       const tw=rel(K.sS*(L/2+13),-K.bS*9);kst.add(G.box,M(tw[0],18,tw[1],8.5,36,8.5,ryA+0.1),'#9a4b37');kst.add(G.box,M(tw[0],36.4,tw[1],9.4,0.8,9.4,ryA+0.1),'#7d3a2a');
       kst.add(G.cone,M(tw[0],41,tw[1],7.5,9,7.5),'#3f5c50');kst.add(G.ico,M(tw[0],46,tw[1],1.6,1.6,1.6),'#3f5c50');kst.add(G.cone6,M(tw[0],49,tw[1],0.9,4,0.9),'#3f5c50');
@@ -1796,7 +1984,7 @@ function buildCity(){
       for(const q of[[-1,-1],[1,-1],[1,1],[-1,1]]){const p=[north[0]+(a[0]*q[0]-a[1]*q[1])*4.2,north[1]+(a[1]*q[0]+a[0]*q[1])*4.2];kst.add(G.cone6,M(p[0],64.5,p[1],1.4,6,1.4),'#3c4a44');}
       kst.add(G.ico,M(north[0],81,north[1],1.0,1.0,1.0),'#d8b04a');
       kst.add(G.box,M(south[0],26,south[1],8,52,8,ry),BR);kst.add(G.cyl12,M(south[0],53.5,south[1],6,3,6),'#3c4a44');kst.add(G.ico,M(south[0],56,south[1],4.2,3.6,4.2),'#3c4a44');kst.add(G.cone6,M(south[0],59.5,south[1],0.8,4,0.8),'#3c4a44');
-      const gate=rp(e*(L/2+0.2),0);kst.add(G.box,M(gate[0],3.5,gate[1],0.5,7,4,ry),'#5a2f24');
+      const gate=rp(e*(L/2+0.2),0);{const dd=rp(e*(L/2+2.6),0);K.doors=K.doors||{};K.doors.mar=[dd[0],dd[1],Math.atan2(-a[0]*e,-a[1]*e)];}kst.add(G.box,M(gate[0],3.5,gate[1],0.5,7,4,ry),'#5a2f24');
       KRK.marTower=north;wall(mar.p,0.6,1.2,1.5);obstAdd([north[0],north[1],5.4]);obstAdd([south[0],south[1],5.1]);}
     // ---- other landmarks ----
     const rr=(r,u,v)=>[r.c[0]+r.ax[0]*u-r.ax[1]*v,r.c[1]+r.ax[1]*u+r.ax[0]*v],ryOf=r=>Math.atan2(-r.ax[1],r.ax[0]);
@@ -1805,7 +1993,7 @@ function buildCity(){
     for(const r of red.biskupi||[]){useCh(r.c[0],r.c[1]);extrude(kst,r.p,0,15,'#e6d7b8','#8a3b28');kst.add(G.prism,M(r.c[0],15,r.c[1],r.L-4,5,r.W-4,ryOf(r)),'#8a3b28');wall(r.p,0.8,1.1,1.6);}
     for(const r of red.franciszkanow||[]){useCh(r.c[0],r.c[1]);extrude(kst,r.p,0,6,'#c9a27c','#8a3b28');const ry=ryOf(r);kst.add(G.box,M(r.c[0],10,r.c[1],r.L*0.75,20,r.W*0.45,ry),'#ab5a40');kst.add(G.prism,M(r.c[0],20,r.c[1],r.L*0.75,11,r.W*0.45+0.6,ry),'#5e3a2e');
       const t=rr(r,r.L*0.3,r.W*0.08);kst.add(G.box,M(t[0],18,t[1],7,36,7,ry),'#ab5a40');kst.add(G.cone,M(t[0],41,t[1],6,10,6),'#3f5c50');wall(r.p,0.8,1.1,1.6);}
-    for(const r of red.remuh||[]){useCh(r.c[0],r.c[1]);const ry=ryOf(r),s=rr(r,-r.L/2+12,0);kst.add(G.box,M(s[0],5.5,s[1],18,11,12,ry),'#d2c6ab');kst.add(G.prism,M(s[0],11,s[1],18,4,12,ry),'#6e5a44');obstAdd([s[0],s[1],8]);
+    for(const r of red.remuh||[]){useCh(r.c[0],r.c[1]);const ry=ryOf(r),s=rr(r,-r.L/2+12,0);{const dd=rr(r,-r.L/2-2.6,0);K.doors=K.doors||{};K.doors.remuh=[dd[0],dd[1],Math.atan2(r.ax[0],r.ax[1])];}kst.add(G.box,M(s[0],5.5,s[1],18,11,12,ry),'#d2c6ab');kst.add(G.prism,M(s[0],11,s[1],18,4,12,ry),'#6e5a44');obstAdd([s[0],s[1],8]);
       const P=r.p,s2=Math.sign(area(P))||1;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz);if(L<1)continue;kst.add(G.box,M((a[0]+b[0])/2,1,(a[1]+b[1])/2,L,2,0.45,Math.atan2(-dz/L,dx/L)),'#b9ad98');}
       tri(kst,P,0.13,'#55703f');
       for(let u=-r.L/2+24;u<r.L/2-3;u+=2.4)for(let v=-r.W/2+3;v<r.W/2-3;v+=2.2){if(Math.random()<0.45)continue;const p=rr(r,u+rnd(-0.5,0.5),v+rnd(-0.4,0.4));if(!krkPip(P,p[0],p[1]))continue;const h=rnd(0.7,1.4);kst.add(G.box,M(p[0],h/2,p[1],0.6,h,0.16,ry+rnd(-0.2,0.2),rnd(-0.12,0.12)),pick(['#8d8a83','#7a7770','#9b968c','#6f6b64']));}
@@ -1819,7 +2007,7 @@ function buildCity(){
       for(let u=-L/2+10;u<L/2-5;u+=20){const p=rr(r,u,0);kst.add(G.box,M(p[0],8,p[1],6,16,7,ry),'#a35a42');kst.add(G.prism,M(p[0],16,p[1],6,4,7,ry),'#7a2f22');}
       wall(r.p,0.3,1.4,1.5);
       // Brama Floriańska at the west end, an arch the street goes through
-      const wEnd=r.ax[0]>=0?-1:1,g=rr(r,wEnd*(L/2+5),0),px=-r.ax[1],pz=r.ax[0];
+      const wEnd=r.ax[0]>=0?-1:1,g=rr(r,wEnd*(L/2+5),0),px=-r.ax[1],pz=r.ax[0];K.gate=g;K.gateP=[px,pz];
       for(const sd of[-1,1]){const p=[g[0]+r.ax[0]*sd*3.9,g[1]+r.ax[1]*sd*3.9];kst.add(G.box,M(p[0],3.2,p[1],2.2,6.4,10,ry),'#a35a42');for(const q of[-4,-2,0,2,4])obstAdd([p[0]+px*q,p[1]+pz*q,1.2]);}
       kst.add(G.box,M(g[0],17,g[1],10,22,10,ry),'#a35a42');kst.add(G.box,M(g[0],6.6,g[1],5.6,0.6,10.2,ry),'#7a3a2a');kst.add(G.cone,M(g[0],33,g[1],9,10,9,Math.PI/8),'#4f7a68');kst.add(G.ico,M(g[0],38.5,g[1],0.7,0.7,0.7),'#d8b04a');
       kst.add(G.box,M(g[0]+px*5.06,14,g[1]+pz*5.06,2.2,3,0.1,ry),'#3a3a3a');kst.add(G.box,M(g[0]-px*5.06,14,g[1]-pz*5.06,2.2,3,0.1,ry),'#3a3a3a');}
@@ -1838,7 +2026,7 @@ function buildCity(){
         for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz);if(L<6)continue;const ry=Math.atan2(-dz/L,dx/L);
           for(let t=3;t<L-2;t+=4.2)for(const y of[YB+4,YB+8,YB+12]){const s=Math.sign(area(P))||1,ox=dz/L*s,oz=-dx/L*s;kst.add(G.box,M(a[0]+dx/L*t+ox*0.05,y,a[1]+dz/L*t+oz*0.05,1.3,1.9,0.12,ry),'#3a3f46');}}
         wall(P,0.6,1.2,1.5);}
-      const KT=[80+(160-262)*0.9,205+680*0.9];
+      const KT=[80+(160-262)*0.9,205+680*0.9];K.KT=KT;
       kst.add(G.box,M(KT[0]-14,YB+19,KT[1]-6,10,38,10),'#a65a42');kst.add(G.cone,M(KT[0]-14,YB+42,KT[1]-6,8,9,8),'#3f5c50');kst.add(G.ico,M(KT[0]-14,YB+47,KT[1]-6,0.8,0.8,0.8),'#d8b04a');
       kst.add(G.box,M(KT[0]+16,YB+17,KT[1]-8,9,34,9),'#c9b18f');kst.add(G.ico,M(KT[0]+16,YB+36,KT[1]-8,7,6,7),'#3f6b5a');kst.add(G.cone6,M(KT[0]+16,YB+40.5,KT[1]-8,0.9,4,0.9),'#d8b04a');
       kst.add(G.cyl12,M(KT[0]+2,YB+18,KT[1]+9,8,3,8),'#e7dcc6');kst.add(G.ico,M(KT[0]+2,YB+20.5,KT[1]+9,8.4,6.4,8.4),'#d8b04a');kst.add(G.cone6,M(KT[0]+2,YB+24.5,KT[1]+9,0.7,3,0.7),'#d8b04a');
@@ -1861,6 +2049,17 @@ function buildCity(){
       const s=Math.sign(area(P))||1;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz);if(L<20)continue;const ux=dx/L,uz=dz/L,ix=-uz*s,iz=ux*s;
         for(let t=10;t<L-6;t+=26){const x=a[0]+ux*t+ix*2.2,z=a[1]+uz*t+iz*2.2;if(krkH(x,z)>0.3)continue;kst.add(G.box,M(x,0.5,z,1.9,0.12,0.55,Math.atan2(-uz,ux)),'#7a5a3c');kst.add(G.box,M(x+ix*0.25,0.8,z+iz*0.25,1.9,0.5,0.08,Math.atan2(-uz,ux)),'#7a5a3c');obstAdd([x,z,0.8]);}}}
     // the street from the city comes in where ul. Długa starts on the plan; the city's ring of solids is opened there (see BLK/solids)
+    // doors on the Wawel plateau and the mission checkpoints
+    {K.doors=K.doors||{};const plat=(tx,tz,poly)=>{let best=null,bd=1e9;const B=K.wb;for(let x=B[0];x<B[2];x+=1.5)for(let z=B[1];z<B[3];z+=1.5){if(!krkPip(K.wout,x,z)||krkPolyD(K.wout,x,z)<3)continue;let bad=false;for(const r of K.red)if(krkPip(r.p,x,z)||krkPolyD(r.p,x,z)<1.8){bad=true;break;}if(bad)continue;
+        const d=Math.hypot(x-tx,z-tz)+(poly?Math.abs(krkPolyD(poly,x,z)-2.5)*3:0);if(d<bd){bd=d;best=[x,z];}}return best;};
+      const zr=(red.zamek||[])[0],KT=K.KT;if(zr){const p=plat(zr.c[0],zr.c[1],zr.p);if(p)K.doors.zamek=[p[0],p[1],0];}
+      if(KT){const p=plat(KT[0]-14,KT[1]-6,null);if(p)K.doors.dzwon=[p[0],p[1],0];}
+      if(K.smok){const p=plat(K.smok.x,K.smok.z,null);if(p)K.doors.jama=[p[0],p[1],0];}
+      const named=n=>{const i=K.names.indexOf(n);if(i<0)return null;let sx=0,sz=0,c=0;for(const s of K.seg)if(s[2]===i){sx+=s[0][0]+s[1][0];sz+=s[0][1]+s[1][1];c+=2;}if(!c)return null;sx/=c;sz/=c;let best=null,bd=1e9;for(const s of K.seg)if(s[2]===i)for(const q of[s[0],s[1]]){const d=Math.hypot(q[0]-sx,q[1]-sz);if(d<bd){bd=d;best=q;}}return best;};
+      const Bb=(red.barbakan||[])[0],g=K.gate,gp=K.gateP;K.mis={};
+      if(Bb&&g){K.mis.barb=[(Bb.circ[0]+g[0])/2,(Bb.circ[1]+g[1])/2];const sg=gp[1]>=0?1:-1;K.mis.brama=[g[0]+gp[0]*sg*8,g[1]+gp[1]*sg*8];}
+      K.mis.flor=named('Floriańska');K.mis.grodz=named('Grodzka');
+      K.del=[K.doors.mar,K.doors.suk,K.mis.brama,named('Szewska'),named('Sienna'),named('Sławkowska'),named('św. Anny'),named('Bracka'),named('Kanonicza'),named('Szpitalna')].filter(Boolean).map(p=>[p[0],p[1]]);}
     K.trees=nt;K.lamps=nl;K.built=true;K.chunks=[...CHS.values()];
   }
   buildKrakow();
@@ -4420,7 +4619,7 @@ function walkTargets(){
     const f=CAMP.inside[FOOT.inside];c.push({d:Math.hypot(x-f.x,z-f.z),r:2.6,label:'Porozmawiaj: '+f.name,f:()=>talkTo(f)});}
   else{
     {const dr=gmCarDoor();c.push({d:Math.hypot(x-dr[0],z-dr[1]),r:3.2,label:P.veh==='coach'?'Wsiądź do autokaru':'Wsiądź do auta',f:()=>{if(FOOT.joined&&Math.hypot(P.x-CAMP.x,P.z-CAMP.z)<60&&!FOOT.byeSaid){FOOT.byeSaid=true;}endWalk();}});}
-    travelTargets(x,z,c);shopTargets(x,z,c);floodTargets(x,z,c);
+    travelTargets(x,z,c);shopTargets(x,z,c);floodTargets(x,z,c);krkTargets(x,z,c);
     CAMP.campers.forEach((k,i)=>c.push({d:Math.hypot(x-k.door[0],z-k.door[1]),r:1.8,label:'Wejdź do kampera ('+k.who+')',f:()=>walkEnterCamper(i)}));
     for(const ct of CATS.list)if(ct.g.visible&&ct.state!=='flee')c.push({d:Math.hypot(x-ct.x,z-ct.z),r:1.6,label:'Pogłaszcz kota ('+ct.name+')',f:()=>catPet(ct)});
     if(DOG.g&&DOG.g.visible)c.push({d:Math.hypot(x-DOG.x,z-DOG.z),r:1.9,label:'Pogłaszcz Reksia',f:dogPet});
@@ -4457,6 +4656,7 @@ function updateWalk(dt){
   if(FOOT.ride){rideUpdate(I);const kk=(xr.active?'A':HEADLESS?'E':(document.body.classList.contains('touch')?'💬':'E')),ht=DLG.open||!FOOT.ride?'':FOOT.target?kk+' — '+FOOT.target.label:(FOOT.rinfo||'');
     if(ht!==FOOT.ht){FOOT.ht=ht;if(!HEADLESS){$('whint').hidden=!ht||xr.active;$('whint').textContent=ht;if(xr.active){if(ht){drawCapBoard(ht);capBoard.visible=true;}else if(!cine)capBoard.visible=false;}}}
     return;}
+  if(FOOT.view){krkViewUpdate(I);return;}
   let yaw=FOOT.yaw;if(xr.active){camera.getWorldQuaternion(_hq);_he.setFromQuaternion(_hq,'YXZ');yaw=_he.y;}
   const sp=(I.run?3.3:1.6)*(FOOT.boostT>0?1.4:1)*Math.min(1,Math.hypot(I.mx,I.mz)),len=Math.hypot(I.mx,I.mz)||1;
   const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
@@ -4475,11 +4675,12 @@ function updateWalk(dt){
   const ht=DLG.open?'':FOOT.target?((xr.active?'A':HEADLESS?'E':(document.body.classList.contains('touch')?'💬':'E'))+' — '+FOOT.target.label):'';
   if(ht!==FOOT.ht){FOOT.ht=ht;if(!HEADLESS){$('whint').hidden=!ht||xr.active;$('whint').textContent=ht;if(xr.active){if(ht){drawCapBoard(ht);capBoard.visible=true;}else if(!cine)capBoard.visible=false;}}}
 }
-function walkCamera(){if(!FOOT.on||xr.active)return;if(FOOT.ride){camera.position.copy(FOOT.seat);camera.rotation.set(FOOT.pitch,FOOT.yaw,0,'YXZ');return;}if(FOOT.pump&&!FOOT.tp&&!FOOT.room){const y=FLOC.yaw,sx=Math.sin(y),sz=-Math.cos(y);camera.position.set(FLD.pump.x-sx*7,9.5,FLD.pump.z-sz*7);camera.rotation.set(-0.42+FOOT.pitch*0.5,-y,0,'YXZ');return;}if(FOOT.tp){const d=FOOT.room?2.2:3.4;camera.position.set(FOOT.x+Math.sin(FOOT.yaw)*d,FOOT.y+2.3,FOOT.z+Math.cos(FOOT.yaw)*d);camera.rotation.set(FOOT.pitch-0.28,FOOT.yaw,0,'YXZ');return;}camera.position.set(FOOT.x,FOOT.y+1.66,FOOT.z);camera.rotation.set(FOOT.pitch,FOOT.yaw,0,'YXZ');}
+function walkCamera(){if(!FOOT.on||xr.active)return;if(FOOT.view){camera.position.set(FOOT.view.x,FOOT.view.y+1.66,FOOT.view.z);camera.rotation.set(FOOT.pitch,FOOT.yaw,0,'YXZ');return;}if(FOOT.ride){camera.position.copy(FOOT.seat);camera.rotation.set(FOOT.pitch,FOOT.yaw,0,'YXZ');return;}if(FOOT.pump&&!FOOT.tp&&!FOOT.room){const y=FLOC.yaw,sx=Math.sin(y),sz=-Math.cos(y);camera.position.set(FLD.pump.x-sx*7,9.5,FLD.pump.z-sz*7);camera.rotation.set(-0.42+FOOT.pitch*0.5,-y,0,'YXZ');return;}if(FOOT.tp){const d=FOOT.room?2.2:3.4;camera.position.set(FOOT.x+Math.sin(FOOT.yaw)*d,FOOT.y+2.3,FOOT.z+Math.cos(FOOT.yaw)*d);camera.rotation.set(FOOT.pitch-0.28,FOOT.yaw,0,'YXZ');return;}camera.position.set(FOOT.x,FOOT.y+1.66,FOOT.z);camera.rotation.set(FOOT.pitch,FOOT.yaw,0,'YXZ');}
 
 /* ================= What people say ================= */
 function talkTo(f){
   DLG.npc=f;const k=f.talk;
+  if(k&&k.startsWith('krk_'))return krkTalk(f,k);
   if(k==='zosia')return dlgOpen('Zosia','Cześć! Szyję maskotki do aut — dla każdego, kto zatrzyma się w naszym obozie. Którą chcesz?',
     Object.keys(MASCOTS).map(id=>({t:MASCOTS[id]+(MASC.id===id?' (masz ją)':''),f:()=>{setMascot(id);dlgOpen('Zosia',id==='dice'?'Kostki zawiesiłam na lusterku. Niech Ci przynoszą szczęście!':'Gotowe, stoi na desce rozdzielczej. Zobaczysz, jak kiwa się na zakrętach!',[]);}})).concat([{t:'Dzięki, może innym razem',f:null}]));
   if((CAMP.angry||CAMP.grudge>0)&&f.camp)return dlgOpen(f.name,f===CAMP.elder?'Odjedź stąd. Potrąciłeś jednego z nas — wróć, kiedy emocje opadną.':'Nie chcę z tobą rozmawiać po tym, co zrobiłeś.',[]);
@@ -5241,8 +5442,12 @@ function gmOpen(){
     if(GM.hail)o.push({t:'Odwołaj zamówienie taksówki',f:()=>{gmHailCancel();}});
     else if(taxis.length)o.push({t:'🚕 Zamów taksówkę (jeździ: '+taxis.map(r=>r.name).join(', ')+')',f:gmHailPick});
     const st=nearStation();if(st)o.push({t:'🚆 Rozkład: '+trainInfo(st),f:()=>dlgOpen('Kolej regionalna',trainInfo(st)+' Pociąg zatrzymuje się na stacjach Zalesie i Dzików. Stań na peronie i wsiądź, gdy otworzy drzwi.',[])});
+    if(krkIn(FOOT.x,FOOT.z)||(SAVE.stamps||[]).length)o.push({t:'📜 Paszport turysty ('+(SAVE.stamps||[]).length+'/'+STAMPS.length+')',f:krkPassport});
+    if((SAVE.torba||[]).length)o.push({t:'🛍️ Torba z zakupami ('+SAVE.torba.length+')',f:()=>bagDialog('torba')});
+    if(KMIS.m)o.push({t:'⏹ Przerwij: '+KMIS.m.who,f:()=>{dlgClose();krkMisStop('Misja przerwana.');}});
     o.push({t:'Gdzie jest moje auto?',f:()=>{const d=Math.round(Math.hypot(P.x-FOOT.x,P.z-FOOT.z));dlgOpen('Twoje '+(P.veh==='coach'?'autokar':'auto'),'Stoi '+d+' m stąd, '+streetAt(P.x,P.z)+'. '+dirWord(P.x-FOOT.x,P.z-FOOT.z)+'.',[]);}});
   }else if(!FOOT.on){
+    if((SAVE.trunk||[]).length&&(P.veh||'car')==='car')o.push({t:'🧺 Zakupy w bagażniku ('+SAVE.trunk.length+')',f:()=>bagDialog('trunk')});
     o.push({t:'🚶 Wysiądź '+(P.veh==='coach'?'z autokaru':'z auta'),f:()=>{dlgClose();gmExitCar();}});
     if(!GM.tour&&!(ch&&role))o.push({t:GM.taxi?'🚕 Wyłącz tryb taksówki':'🚕 Taksówka — wożenie pasażerów'+(isMulti?' (rywalizacja o kursy)':''),f:()=>{dlgClose();taxiToggle(!GM.taxi);}});
     if(isMulti&&NET.role==='host'&&!GM.race&&!ch)o.push({t:'🏁 Wyścig taksówek: 5 minut, wygrywa najwyższy utarg',f:()=>{dlgClose();taxiRaceStart(300);}});
@@ -5279,6 +5484,7 @@ function scoreSync(){if(NET.role==='host')netSendJ({t:'gs',s:[...GM.score.entrie
 /* ---- one small status line (HUD pill, centre screen band, mission panel) ---- */
 function gmInfo(){
   {const f=floodInfo();if(f)return f;}
+  {const k=krkMisInfo();if(k)return k;}
   const ch=GM.chase,role=gmRole();
   if(ch&&role){const m=Math.round(ch.m*100);
     if(ch.ph==='head')return {who:'Pościg',txt:role==='fug'?'Uciekaj! Policja rusza za '+Math.ceil(ch.t)+' s':'Uciekinier: '+plName(ch.fug)+' · start za '+Math.ceil(ch.t)+' s',urgent:true};
@@ -5319,6 +5525,7 @@ function gmMapOver(x,cx,cy,s){
 // the one thing the player should drive to now
 function gmTarget(){
   {const f=floodTarget();if(f)return f;}
+  {const k=krkMisTarget();if(k)return k;}
   if(GM.tour){const s=GM.tour.cur;return s?{x:s.x,z:s.z,col:'#ffb422'}:null;}
   if(GM.carry)return {x:GM.carry.dx,z:GM.carry.dz,col:'#ffd400'};
   if(GM.thief)return {x:GM.thief.c.x,z:GM.thief.c.z,col:'#e3241b'};
@@ -5702,6 +5909,7 @@ function rideFollow(I){
     FOOT.x=r.x;FOOT.z=r.z;FOOT.y=0;const n=busNextStop(r);
     if(r.mode==='busstop'&&(r.doorT||0)>0.5)FOOT.target={label:'Wysiądź'+(n&&n.here?': '+n.st.name:''),f:()=>rideExit(false)};
     else FOOT.rinfo='🚌 '+(n?'Następny przystanek: '+n.st.name:'Linia A');
+  }else if(k==='dor'){krkDorFollow(r);
   }else if(k==='train'){
     const R=RAIL,car=R.cars[1];const cx=R.head-R.dir*(car.off+car.len/2);FOOT.x=cx;FOOT.z=R.z;r.x=cx;r.z=R.z;r.hx=R.dir;r.hz=0;r.th=Math.atan2(-R.dir,0);
     if(!R.active){if(!FOOT.offAt)FOOT.offAt=simTime;if(simTime-FOOT.offAt>2){FOOT.offAt=0;rideExit(true);}return;}FOOT.offAt=0;
@@ -5850,7 +6058,7 @@ function stationTex(n){if(_stTex.has(n))return _stTex.get(n);const c=canvas(256,
 
 /* ================= Money, shops, hairdresser, paint shop, homes ================= */
 const SAVE=(()=>{let s=null;try{s=JSON.parse(localStorage.getItem('mjvr.save')||'null');}catch(e){}
-  return Object.assign({money:150,hc:null,hs:0,hat:null,gl:0,shirt:null,car:null,stripe:0,spoiler:0,fresh:0,houses:[]},s||{});})();
+  return Object.assign({money:150,hc:null,hs:0,hat:null,gl:0,shirt:null,car:null,stripe:0,spoiler:0,fresh:0,houses:[],torba:[],trunk:[],fridge:[],stamps:[],luck:0},s||{});})();
 function saveGame(){try{localStorage.setItem('mjvr.save',JSON.stringify(SAVE));}catch(e){}}
 const zl=v=>Math.round(v).toLocaleString('pl-PL').replace(/ /g,' ')+' zł';
 function cashIn(v,why){v=Math.round(v);if(!v)return;SAVE.money+=v;saveGame();msg('💰 +'+zl(v)+(why?' — '+why:''),3.5);Snd.beep(0.12);}
@@ -5861,6 +6069,9 @@ const lookKey=l=>l?[l.shirt,l.hc,l.hs,l.hat,l.gl].join('|'):'';
 /* ---- shop items ---- */
 const HEADLINES=['„Tunel pod wzgórzem otwarty! Mieszkańcy zachwyceni oświetleniem”','„Dziki w Dzikowie: rekordowa liczba przejść przez drogę”','„Obóz nad rzeką zaprasza na wieczór z gitarą”','„Burmistrz: Nadrzeczna zostanie zabezpieczona przed powodzią”','„Market Koszyk: promocja na ogórki kiszone”','„Nowe osiedle domków w Zalesiu — ostatnie wolne działki!”','„Kot Mruczek z ul. Ogrodowej bohaterem internetu”'];
 const ITEMS={
+  amber:{n:'Naszyjnik z bursztynu',p:60,f:()=>say('Bursztyn z Bałtyku — mieni się jak miód.','Ty')},amberring:{n:'Pierścionek z bursztynem',p:45,f:()=>say('Pasuje idealnie!','Ty')},
+  smokfig:{n:'Figurka smoka wawelskiego',p:25,f:()=>say('Smok na półkę. Zieje ogniem tylko w wyobraźni.','Ty')},magnes:{n:'Magnes z Sukiennicami',p:8,f:()=>say('Na lodówkę!','Ty')},pocztowka:{n:'Pocztówka z Krakowa',p:3,f:()=>say('„Pozdrowienia z Krakowa!” — wyślę do babci.','Ty')},
+  szkatulka:{n:'Szkatułka z drewna',p:45,f:()=>say('Pachnie drewnem. Schowam w niej pieczątki z paszportu.','Ty')},koronka:{n:'Serwetka z koniakowskiej koronki',p:30,f:()=>say('Misterna robota!','Ty')},ciupaga:{n:'Ciupaga góralska',p:40,f:()=>say('Prawdziwa ciupaga! Hej!','Ty')},
   obwarzanek:{n:'Obwarzanek z makiem',p:3,f:()=>say('Chrupiący, krakowski — najlepszy!','Ty')},
   zapiekanka:{n:'Zapiekanka z placu Nowego',p:14,f:()=>{FOOT.boostT=Math.max(FOOT.boostT||0,60);say('Ogromna! Z pieczarkami i serem.','Ty');}},
   coffee:{n:'Kawa z ekspresu',p:6,f:()=>{FOOT.boostT=120;msg('☕ Kopa po kawie: przez 2 minuty chodzisz szybciej.',3);}},
@@ -5881,7 +6092,7 @@ const ITEMS={
   eggs:{n:'Jajka od szczęśliwych kur',p:8,f:()=>msg('Tylko nie hamuj gwałtownie…',2)}};
 const COLORS=[['Czerwony','#c0392b'],['Niebieski','#2e86c1'],['Zielony','#27ae60'],['Żółty','#f4d03f'],['Czarny','#1e1f22'],['Biały','#ecf0f1'],['Różowy','#e35d9b'],['Pomarańczowy','#e67e22'],['Fioletowy','#8e44ad'],['Szary','#7f8c8d']];
 function colorPick(title,set){dlgOpen(title,'Wybierz kolor.',COLORS.map(([n,c])=>({t:n,f:()=>{set(c);saveGame();lookChanged();msg('Gotowe: '+n.toLowerCase()+'.',2);}})));}
-function scratchCard(){const r=Math.random();const w=r<0.02?500:r<0.1?50:r<0.3?10:0;
+function scratchCard(){const r=SAVE.luck?Math.random()*0.12:Math.random();if(SAVE.luck){SAVE.luck=0;saveGame();}const w=r<0.02?500:r<0.1?50:r<0.3?10:0;
   if(w){cashIn(w,'wygrana ze zdrapki');dlgOpen('Zdrapka','Wygrywasz '+zl(w)+'!',[]);}else dlgOpen('Zdrapka','Niestety, tym razem nic. Może następnym razem!',[]);}
 function shopDialog(name,ids,greet){
   const o=ids.map(id=>{const it=ITEMS[id];return {t:it.n+' — '+zl(it.p),f:()=>{if(cashPay(it.p,it.n)){dlgClose();it.f();}}};});
@@ -5981,10 +6192,10 @@ function buildRooms(){
     for(const z of rows){roomBox(m,R.x0+14,0.9,z,22,1.8,1.0,'#5d6670');R.obs.push([R.x0+3,z-0.6,R.x0+25,z+0.6]);
       for(let lv=0;lv<3;lv++)for(let x=R.x0+3.5;x<R.x0+25;x+=0.9)roomBox(m,x,0.45+lv*0.55,z+(Math.random()<0.5?-0.42:0.42),0.7,0.38,0.16,pick(['#c0392b','#f4d03f','#2e86c1','#27ae60','#e67e22','#ecf0f1','#8e44ad']));}
     CAT.forEach(([n,ids,col],i)=>{const z=(rows[i]+rows[i+1])/2;roomBox(m,R.x0+14,3.4,z,4,0.6,0.06,col);
-      R.targets.push({x:R.x0+26.5,z,r:2.6,label:'Regał: '+n,f:()=>shopDialog('Market Koszyk — '+n,ids,'Proszę bardzo, wszystko świeże.')});
-      R.targets.push({x:R.x0+4,z,r:2.6,label:'Regał: '+n,f:()=>shopDialog('Market Koszyk — '+n,ids,'Proszę bardzo, wszystko świeże.')});});
+      R.targets.push({x:R.x0+26.5,z,r:2.6,label:'Regał: '+n,f:()=>basketShelf(n,ids)});
+      R.targets.push({x:R.x0+4,z,r:2.6,label:'Regał: '+n,f:()=>basketShelf(n,ids)});});
     for(const z of[-6,6]){roomBox(m,R.x1-6,0.5,z,3.2,1.0,1.0,'#3a3f45');roomBox(m,R.x1-6,1.02,z,3.2,0.04,1.0,'#9aa0a6');R.obs.push([R.x1-7.6,z-0.5,R.x1-4.4,z+0.5]);
-      R.targets.push({x:R.x1-6,z:z+(z<0?1.6:-1.6),r:2.2,label:'Kasa: zdrapki i gazety',f:()=>shopDialog('Kasa','news lotto'.split(' '),'Coś jeszcze do koszyka?')});}
+      R.targets.push({x:R.x1-6,z:z+(z<0?1.6:-1.6),r:2.2,label:basketLabel,f:basketCheckout});}
     R.folk=[['Kasjerka Ela',[[R.x1-6,-7.2]],{woman:true,shirt:'#c8102e'},{face:[0,1],lines:['Dzień dobry! Płaci pan kartą czy gotówką?','Zdrapki mamy przy kasie.','Promocja na ogórki kiszone!']}],
       ['Klientka z koszykiem',[[R.x0+5,-6.75],[R.x0+24,-6.75],[R.x0+24,2.25],[R.x0+5,2.25]],{woman:true},{loop:true,speed:0.7,lines:['Gdzie tu jest mąka?','Ceny rosną jak na drożdżach.']}],
       ['Pan z listą zakupów',[[R.x0+22,6.75],[R.x0+6,6.75]],{},{speed:0.8,lines:['Żona kazała kupić „to, co zawsze”. Ale co to jest?']}],
@@ -6003,7 +6214,7 @@ function buildRooms(){
     roomBox(m,cx+1,0.5,cz+D/2-0.4,1.6,1.0,0.4,'#3a3f45');lm.add(G.box,M(cx+1,1.35,cz+D/2-0.25,1.5,0.85,0.04),'#2f5d8a');
     roomBox(m,cx+W/2-1.0,1.0,cz-D/2+0.5,1.2,2.0,0.7,'#f4f4f4');roomBox(m,cx-1.8,1.0,cz+D/2-0.4,1.4,2.0,0.6,'#8a6a4a');
     if(big){roomBox(m,cx-W/2+0.4,0.8,cz-D/2+2.2,0.6,1.6,1.8,'#9a9890');lm.add(G.box,M(cx-W/2+0.65,0.5,cz-D/2+2.2,0.1,0.5,1.0),'#ff8a2a');roomBox(m,cx+4,0.6,cz+2,1.6,1.2,0.6,'#1a1a1a');}
-    R.targets.push({x:cx-W/2+2.6,z:cz,r:1.8,label:'Prześpij się do rana',f:()=>roomSleep()},{x:cx+W/2-1.0,z:cz-D/2+1.4,r:1.6,label:'Lodówka: coś do jedzenia',f:()=>say(pick(['Zimna pizza z wczoraj. Idealnie.','Jogurt truskawkowy!','Ogórki kiszone babci Hani.']),'Ty')},
+    R.targets.push({x:cx-W/2+2.6,z:cz,r:1.8,label:'Prześpij się do rana',f:()=>roomSleep()},{x:cx+W/2-1.0,z:cz-D/2+1.4,r:1.6,label:fridgeLabel,f:krkFridge},
       {x:cx-1.8,z:cz+D/2-1.2,r:1.6,label:'Szafa: zmień koszulkę',f:()=>dlgOpen('Szafa','Którą koszulkę zakładasz?',COLORS.map(([n,c])=>({t:n,f:()=>{SAVE.shirt=c;saveGame();lookChanged();}})))},
       {x:cx+1,z:cz+D/2-1.4,r:1.6,label:'Włącz telewizor',f:()=>dlgOpen('Wiadomości','Prezenter: '+pick(HEADLINES),[])});
     if(big)R.targets.push({x:cx+4,z:cz+3,r:1.6,label:'Zagraj na pianinie',f:()=>{if(!Music.on)Music.start();msg('🎹 Grasz… sąsiedzi słuchają.',3);}});
@@ -6011,9 +6222,9 @@ function buildRooms(){
   const g=new THREE.Group();g.add(new THREE.Mesh(m.build(),matRoom));g.add(new THREE.Mesh(lm.build(),matBasicVC));scene.add(g);
   const mk=ROOMS[0];for(const [n,pts,lk,o] of mk.folk)folkAdd(n,pts,lk,7300+n.length,Object.assign({y:0.03},o));
 }
-function enterRoom(R){if(!R)return;fadeThen(()=>{FOOT.room=R;FOOT.inside=-1;walkTeleport(R.door[0]-1.2,R.door[1],Math.PI/2);WX.cover=true;msg(R.n,2);});}
-function leaveRoom(){const R=FOOT.room;if(!R)return;fadeThen(()=>{FOOT.room=null;WX.cover=false;walkTeleport(R.out[0],R.out[1],R.outYaw);});}
-function roomTargets(x,z,c){const R=FOOT.room;c.push({d:Math.hypot(x-R.door[0],z-R.door[1]),r:1.8,label:'Wyjdź na zewnątrz',f:leaveRoom});for(const t of R.targets)c.push({d:Math.hypot(x-t.x,z-t.z),r:t.r,label:t.label,f:t.f});}
+function enterRoom(R){if(!R)return;fadeThen(()=>{FOOT.room=R;FOOT.inside=-1;walkTeleport(R.door[0]-1.2,R.door[1],Math.PI/2);WX.cover=true;msg(R.id==='market'?'Market Koszyk — bierzesz koszyk. Produkty z regałów wkładasz do koszyka, płacisz przy kasie.':R.n,R.id==='market'?4:2);});}
+function leaveRoom(){const R=FOOT.room;if(!R)return;if(R.id==='market'&&marketExitBlocked())return;fadeThen(()=>{FOOT.room=null;WX.cover=false;walkTeleport(R.out[0],R.out[1],R.outYaw);});}
+function roomTargets(x,z,c){const R=FOOT.room;c.push({d:Math.hypot(x-R.door[0],z-R.door[1]),r:1.8,label:'Wyjdź na zewnątrz',f:leaveRoom});for(const t of R.targets)c.push({d:Math.hypot(x-t.x,z-t.z),r:t.r,label:typeof t.label==='function'?t.label():t.label,f:t.f});}
 function roomCollide(x,z){const R=FOOT.room;x=clamp(x,R.x0+0.4,R.x1-0.4);z=clamp(z,R.z0+0.4,R.z1-0.4);
   for(const o of R.obs){if(x>o[0]-0.3&&x<o[2]+0.3&&z>o[1]-0.3&&z<o[3]+0.3){const dl=x-(o[0]-0.3),dr=o[2]+0.3-x,du=z-(o[1]-0.3),dd=o[3]+0.3-z,mn=Math.min(dl,dr,du,dd);if(mn===dl)x=o[0]-0.3;else if(mn===dr)x=o[2]+0.3;else if(mn===du)z=o[1]-0.3;else z=o[3]+0.3;}}return [x,z];}
 function roomSleep(){fadeThen(()=>{if(isHostish()&&!isGuest()){WX.hour=7.2;if(!WX.cycle){WX.tod='cycle';WX.cycle=true;}applyEnv&&applyEnv();NET.metaT=0;}msg('😴 Wyspałeś się. Dzień dobry!',3);});}
@@ -7272,7 +7483,7 @@ for(const b of bays)b.along=nearestAlong(routes[b.route],b.x,b.aisleZ,0.3);
 buildRail();buildAntek();buildGarage();buildAnna();buildTow();buildFolk();buildYard();buildAir();buildFire();buildDog();buildKids();buildCats();
 const PC=buildPlayerCar();
 const rig=PC.rig;
-buildRadioPanel(PC.grp);setVehicle('car');buildRooms();buildShopFronts();buildFloodSite();buildFolk2();buildKrakowFolk();krkMapCanvas();homeSigns();buildHills();buildBackdrop();freshShow();carExtras(PC.grp,SAVE.stripe,SAVE.spoiler,'#f2f2f2');paintOwnCar(0);
+buildRadioPanel(PC.grp);setVehicle('car');buildRooms();buildShopFronts();buildFloodSite();buildFolk2();buildKrakowFolk();buildKrkRooms();krkMapCanvas();homeSigns();buildHills();buildBackdrop();freshShow();carExtras(PC.grp,SAVE.stripe,SAVE.spoiler,'#f2f2f2');paintOwnCar(0);
 // the saved mascot needs the player's car to exist
 {let m=null;try{m=localStorage.getItem('mjvr.mascot');}catch(e){}try{if(m&&MASCOTS[m])setMascot(m,true);}catch(e){console.warn(e);}}
 camera.position.copy(EYE);
@@ -7346,7 +7557,7 @@ if(!HEADLESS){
   initXRStatus();
   renderer.setAnimationLoop(frame);
 }
-window.__VOICE=VOICE;window.__sim={KRK,krkName,krkH,KN,HILL,hillH,busExitSpot,setMode(m){mode=m;},ev:s=>eval(s),SAVE,FL,FLOC,FLD,HOMES,ROOMS,cashIn,floodHostStart,enterRoom,leaveRoom,salonDialog,paintDialog,homeAction,GM,gmOpen,gmExitCar,taxiToggle,setVehicle,tourStart,tourBegin,thiefStart,chaseHostStart,TRAIN_ST,trainBoard,busBoard,rideExit,KIDS,CATS,TUN,inTunnel,readPad,PAD,startEngine,get TUNK(){return TUNK;},RADIO,RADIO_ST,radioNext,radioTune,catPet,hemi,E2:()=>E,Snd,DOG,BENCH,FIRE,dlgC,VILLA,startRide,rideExit,folkHit,PLAYERS_AI:()=>PLAYERS_AI,obbPush,AIR,airForce,airFlight,YD,YARD,lukProj,lukAt,gH,zH,setMascot,pedMeshS,carModel,TYPES,mascotModel,scene,keys,CAMP,CAMPIN,FOOT,FOLK,DLG,MASC,dlgPick,dlgClose,startWalk,speedLimit,ANNA,ANNA_STOPS,TOW,MIS,WORKSHOP,SUBT,qcSend,QC,get msgText(){return msgText;},OBST,SLABS,xr,rig,NET,onRemoteState,NETAPI:{create:netCreate,join:netJoinCode,leave:()=>netLeave()},GAR,floorAt,BUSLINE,spawnLineBus,WX,setWeather,setTod,applyEnv,E,Music,RAIL,boarGroups,boarsAll,ANTEK,spawnBoars,speedLimit,X0,R2,VR,WE,BUSSTOP,INC,pedHit,fade,camera,PC,maintainTraffic,step,cars,peds,lotPeds,P,nodes,bays,routes,exam,startExam,stopExam,applyTOD,locate,lightState,requestGear,shiftUp,setTraffic,setBlink,
+window.__VOICE=VOICE;window.__sim={KMIS,KOSZ,KRK_SIGHTS,krkTalk,PROPS,KRK,krkName,krkH,KN,HILL,hillH,busExitSpot,setMode(m){mode=m;},ev:s=>eval(s),SAVE,FL,FLOC,FLD,HOMES,ROOMS,cashIn,floodHostStart,enterRoom,leaveRoom,salonDialog,paintDialog,homeAction,GM,gmOpen,gmExitCar,taxiToggle,setVehicle,tourStart,tourBegin,thiefStart,chaseHostStart,TRAIN_ST,trainBoard,busBoard,rideExit,KIDS,CATS,TUN,inTunnel,readPad,PAD,startEngine,get TUNK(){return TUNK;},RADIO,RADIO_ST,radioNext,radioTune,catPet,hemi,E2:()=>E,Snd,DOG,BENCH,FIRE,dlgC,VILLA,startRide,rideExit,folkHit,PLAYERS_AI:()=>PLAYERS_AI,obbPush,AIR,airForce,airFlight,YD,YARD,lukProj,lukAt,gH,zH,setMascot,pedMeshS,carModel,TYPES,mascotModel,scene,keys,CAMP,CAMPIN,FOOT,FOLK,DLG,MASC,dlgPick,dlgClose,startWalk,speedLimit,ANNA,ANNA_STOPS,TOW,MIS,WORKSHOP,SUBT,qcSend,QC,get msgText(){return msgText;},OBST,SLABS,xr,rig,NET,onRemoteState,NETAPI:{create:netCreate,join:netJoinCode,leave:()=>netLeave()},GAR,floorAt,BUSLINE,spawnLineBus,WX,setWeather,setTod,applyEnv,E,Music,RAIL,boarGroups,boarsAll,ANTEK,spawnBoars,speedLimit,X0,R2,VR,WE,BUSSTOP,INC,pedHit,fade,camera,PC,maintainTraffic,step,cars,peds,lotPeds,P,nodes,bays,routes,exam,startExam,stopExam,applyTOD,locate,lightState,requestGear,shiftUp,setTraffic,setBlink,
   drawDash,drawScreen,updateHud,gatherInput,updateCamera,get loc(){return loc;},get simTime(){return simTime;},refreshVehicles,RN,GT,genPlan,
   setView(v){view=v;},detachCam(x,y,z,lx,ly,lz){debugCam=true;scene.add(camera);camera.position.set(x,y,z);camera.lookAt(lx,ly,lz);},attachCam(){debugCam=false;rig.add(camera);},setLook(y,p){lookYaw=y;lookPitch=p;},resume};
 })();
